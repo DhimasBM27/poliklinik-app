@@ -14,9 +14,11 @@ class JadwalPeriksaController extends Controller
      */
     public function index()
     {
-        $jadwals = JadwalPeriksa::where('id_dokter', Auth::user()->id)->get();
-        
-        return view('dokter.jadwal-periksa.index', compact('jadwals'));
+        $jadwalPeriksas = JadwalPeriksa::where('id_dokter', Auth::user()->id)
+            ->orderBy('id')
+            ->get();
+
+        return view('dokter.jadwal-periksa.index', compact('jadwalPeriksas'));
     }
 
     /**
@@ -35,18 +37,21 @@ class JadwalPeriksaController extends Controller
         $request->validate([
             'hari'        => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'jam_mulai'   => 'required',
-            'jam_selesai' => 'required',
+            'jam_selesai' => 'required|after:jam_mulai',
         ]);
 
         JadwalPeriksa::create([
-            'id_dokter'   => Auth::id(),
+            'id_dokter'   => Auth::user()->id,
             'hari'        => $request->hari,
             'jam_mulai'   => $request->jam_mulai,
             'jam_selesai' => $request->jam_selesai,
-            'status'      => 'Aktif', // Otomatis diset 'Aktif' saat dibuat
+            'status'      => 'Aktif',
         ]);
 
-        return redirect()->route('jadwal-periksa.index')->with('success', 'Jadwal periksa berhasil ditambahkan!');
+        return redirect()
+            ->route('jadwal-periksa.index')
+            ->with('message', 'Data berhasil disimpan!')
+            ->with('type', 'success');
     }
 
     /**
@@ -69,7 +74,7 @@ class JadwalPeriksaController extends Controller
         $request->validate([
             'hari'        => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'jam_mulai'   => 'required',
-            'jam_selesai' => 'required',
+            'jam_selesai' => 'required|after:jam_mulai',
             'status'      => 'required|in:Aktif,Tidak Aktif',
         ]);
 
@@ -80,7 +85,10 @@ class JadwalPeriksaController extends Controller
             'status'      => $request->status,
         ]);
 
-        return redirect()->route('jadwal-periksa.index')->with('success', 'Jadwal periksa berhasil diperbarui!');
+        return redirect()
+            ->route('jadwal-periksa.index')
+            ->with('message', 'Data berhasil diperbarui!')
+            ->with('type', 'success');
     }
 
     /**
@@ -92,7 +100,10 @@ class JadwalPeriksaController extends Controller
 
         $jadwalPeriksa->delete();
 
-        return redirect()->route('jadwal-periksa.index')->with('success', 'Jadwal periksa berhasil dihapus!');
+        return redirect()
+            ->route('jadwal-periksa.index')
+            ->with('message', 'Data berhasil dihapus!')
+            ->with('type', 'success');
     }
 
     /**
@@ -100,6 +111,6 @@ class JadwalPeriksaController extends Controller
      */
     private function pastikanMilikSendiri(JadwalPeriksa $jadwalPeriksa): void
     {
-        abort_unless($jadwalPeriksa->id_dokter === Auth::id(), 403);
+        abort_unless($jadwalPeriksa->id_dokter === Auth::user()->id, 403);
     }
 }

@@ -1,40 +1,95 @@
 <x-layouts.app title="Tambah Obat">
-    <div class="px-6 py-6 max-w-xl mx-auto">
-        <h1 class="text-2xl font-bold mb-6">Tambah Data Obat</h1>
 
-        <div class="bg-base-100 p-6 rounded-xl shadow-sm border border-base-300">
-            <form action="{{ route('obat.store') }}" method="POST" class="space-y-4">
+    {{-- Header --}}
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{{ route('obat.index') }}" class="flex items-center justify-center w-9 h-9 
+                  rounded-lg bg-slate-100 hover:bg-slate-200 
+                  text-slate-600 transition">
+            <i class="fas fa-arrow-left text-sm"></i>
+        </a>
+
+        <h2 class="text-2xl font-bold text-slate-800">
+            Tambah Obat
+        </h2>
+    </div>
+
+    {{-- Card --}}
+    <div class="card bg-base-100 shadow-md rounded-2xl border border-slate-200">
+        <div class="card-body p-8">
+
+            <form action="{{ route('obat.store') }}" method="POST" novalidate>
                 @csrf
 
-                <div>
-                    <label class="label font-semibold">Nama Obat</label>
-                    <input type="text" name="nama_obat" value="{{ old('nama_obat') }}" class="input input-bordered w-full @error('nama_obat') input-error @enderror" placeholder="Contoh: Paracetamol 500mg" required>
-                    @error('nama_obat')
-                        <span class="text-error text-xs mt-1 block">{{ $message }}</span>
-                    @enderror
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+                    {{-- Nama Obat --}}
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">
+                            Nama Obat <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="nama_obat" value="{{ old('nama_obat') }}"
+                            placeholder="Masukkan nama obat..."
+                            class="w-full px-4 py-2 border-2 rounded-lg focus:border-primary focus:outline-none
+                                   @error('nama_obat') border-red-500 @enderror" required>
+                        @error('nama_obat')
+                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Kemasan --}}
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">
+                            Kemasan <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="kemasan" value="{{ old('kemasan') }}"
+                            placeholder="Contoh: Strip, Botol, Tube..."
+                            class="w-full px-4 py-2 border-2 rounded-lg focus:border-primary focus:outline-none
+                                   @error('kemasan') border-red-500 @enderror" required>
+                        @error('kemasan')
+                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                 </div>
 
-                <div>
-                    <label class="label font-semibold">Kemasan</label>
-                    <input type="text" name="kemasan" value="{{ old('kemasan') }}" class="input input-bordered w-full @error('kemasan') input-error @enderror" placeholder="Contoh: Strip / Botol 100ml" required>
-                    @error('kemasan')
-                        <span class="text-error text-xs mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
+                {{-- Harga --}}
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">
+                        Harga <span class="text-red-500">*</span>
+                    </label>
 
-                <div>
-                    <label class="label font-semibold">Harga (Rp)</label>
-                    <input type="number" name="harga" value="{{ old('harga') }}" class="input input-bordered w-full @error('harga') input-error @enderror" placeholder="Contoh: 5000" required>
+                    <div class="flex items-center border-2 rounded-lg px-4 py-2 focus-within:border-primary
+                                @error('harga') border-red-500 @enderror">
+                        <span class="text-slate-500 text-sm font-semibold mr-2">Rp</span>
+                        <input type="number" name="harga" value="{{ old('harga') }}"
+                            placeholder="0" min="0" step="1"
+                            class="w-full focus:outline-none" required>
+                    </div>
+
                     @error('harga')
-                        <span class="text-error text-xs mt-1 block">{{ $message }}</span>
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div class="flex justify-end gap-2 pt-4">
-                    <a href="{{ route('obat.index') }}" class="btn btn-ghost">Batal</a>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
+                {{-- Buttons --}}
+                <div class="flex gap-3">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-primary 
+                               hover:bg-primary/90 text-white 
+                               font-semibold text-sm transition">
+                        <i class="fas fa-save mr-1"></i>
+                        Simpan
+                    </button>
+
+                    <a href="{{ route('obat.index') }}" class="px-6 py-2.5 rounded-xl bg-slate-100 
+                              hover:bg-slate-200 text-slate-600 
+                              font-semibold text-sm transition">
+                        Batal
+                    </a>
                 </div>
+
             </form>
+
         </div>
     </div>
+
 </x-layouts.app>

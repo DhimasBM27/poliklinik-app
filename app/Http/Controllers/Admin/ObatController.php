@@ -38,21 +38,24 @@ class ObatController extends Controller
 
         Obat::create($validated);
 
-        return redirect()->route('obat.index')->with('success', 'Data obat berhasil ditambahkan!');
+        return redirect()
+            ->route('obat.index')
+            ->with('success', 'Data berhasil disimpan!');
     }
 
     /**
      * Menampilkan form edit obat.
      */
-    public function edit(Obat $obat)
+    public function edit(string $id)
     {
+        $obat = Obat::findOrFail($id);
         return view('admin.obat.edit', compact('obat'));
     }
 
     /**
      * Memperbarui data obat.
      */
-    public function update(Request $request, Obat $obat)
+    public function update(Request $request, string $id)
     {
         $validated = $request->validate([
             'nama_obat' => 'required|string|max:255',
@@ -60,18 +63,24 @@ class ObatController extends Controller
             'harga'     => 'required|integer|min:0',
         ]);
 
+        $obat = Obat::findOrFail($id);
         $obat->update($validated);
 
-        return redirect()->route('obat.index')->with('success', 'Data obat berhasil diperbarui!');
+        return redirect()
+            ->route('obat.index')
+            ->with('success', 'Data berhasil diperbarui!');
     }
 
     /**
      * Menghapus data obat.
      */
-    public function destroy(Obat $obat)
+    public function destroy(string $id)
     {
+        $obat = Obat::findOrFail($id);
         $obat->delete();
 
-        return redirect()->route('obat.index')->with('success', 'Data obat berhasil dihapus!');
+        return redirect()
+            ->route('obat.index')
+            ->with('success', 'Data berhasil dihapus!');
     }
 }

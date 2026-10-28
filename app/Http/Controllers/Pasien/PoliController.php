@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Pasien;
 
+use App\Events\AntrianDiperbarui;
 use App\Http\Controllers\Controller;
 use App\Models\DaftarPoli;
 use App\Models\JadwalPeriksa;
 use App\Models\Poli;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PoliController extends Controller
 {
@@ -37,10 +40,14 @@ class PoliController extends Controller
             ->orderBy('jam_mulai')
             ->get();
 
+        // Pasien yang masih punya antrian aktif belum boleh mendaftar lagi.
+        $sudahAktif = DaftarPoli::where('id_pasien', $user->id)->belumDiperiksa()->exists();
+
         return view('pasien.daftar', [
-            'user'    => $user,
-            'polis'   => $polis,
-            'jadwals' => $jadwals,
+            'user'       => $user,
+            'polis'      => $polis,
+            'jadwals'    => $jadwals,
+            'sudahAktif' => $sudahAktif,
         ]);
     }
 
@@ -69,19 +76,20 @@ class PoliController extends Controller
                 ->withErrors(['id_jadwal' => 'Jadwal tidak valid atau sudah tidak aktif.']);
         }
 
-        // Cegah pendaftaran ganda ke jadwal yang sama sebelum diperiksa.
-        $sudahTerdaftar = DaftarPoli::where('id_pasien', $idPasien)
-            ->where('id_jadwal', $jadwal->id)
-            ->whereDoesntHave('periksas')
-            ->exists();
-
-        if ($sudahTerdaftar) {
-            return back()
-                ->withInput()
-                ->withErrors(['id_jadwal' => 'Anda sudah terdaftar di jadwal ini dan belum diperiksa.']);
-        }
-
         $daftarPoli = DB::transaction(function () use ($request, $jadwal, $idPasien) {
+            // Kunci baris pasien supaya klik ganda tidak membuat dua pendaftaran sekaligus.
+            User::where('id', $idPasien)->lockForUpdate()->first();
+
+            // Aturan: tidak boleh mendaftar ke dua poli sekaligus. Pendaftaran baru
+            // hanya boleh setelah pemeriksaan sebelumnya selesai.
+            $antrianAktif = DaftarPoli::where('id_pasien', $idPasien)->belumDiperiksa()->exists();
+
+            if ($antrianAktif) {
+                throw ValidationException::withMessages([
+                    'id_jadwal' => 'Anda masih memiliki antrian aktif. Pendaftaran baru hanya bisa dilakukan setelah pemeriksaan selesai.',
+                ]);
+            }
+
             $antrianTerakhir = DaftarPoli::where('id_jadwal', $jadwal->id)
                 ->lockForUpdate()
                 ->max('no_antrian');
@@ -94,8 +102,11 @@ class PoliController extends Controller
             ]);
         });
 
+        // Kabari semua dashboard pasien yang sedang terbuka (real-time).
+        AntrianDiperbarui::kirim($jadwal->id);
+
         return redirect()
-            ->route('pasien.daftar')
+            ->route('pasien.dashboard')
             ->with('success', 'Berhasil mendaftar ke poli! Nomor antrian Anda: ' . $daftarPoli->no_antrian);
     }
 }

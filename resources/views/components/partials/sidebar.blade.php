@@ -1,3 +1,13 @@
+@php
+    // Menu ditentukan dari ROLE pengguna (bukan dari URL), supaya halaman
+    // yang dipakai semua role seperti /profile tetap menampilkan menu yang benar.
+    $role = auth()->user()->role ?? null;
+
+    $baseLink = "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200";
+    $inactive = "text-slate-300 hover:bg-white/10 hover:text-white";
+    $active = "bg-gradient-to-r from-white/20 to-white/5 text-white font-semibold border border-indigo-400 border-2";
+@endphp
+
 <aside class="w-full bg-transparent text-slate-300 flex flex-col min-h-screen">
 
     {{-- ================= BRAND ================= --}}
@@ -10,15 +20,15 @@
                     Poliklinik
                 </div>
 
-                @if(request()->is('admin*'))
+                @if($role === 'admin')
                 <span class="text-[10px] font-bold uppercase tracking-wider bg-indigo-400/20 text-indigo-300 border border-indigo-400/30 px-2 py-0.5 rounded-md">
                     Admin
                 </span>
-                @elseif(request()->is('dokter*'))
+                @elseif($role === 'dokter')
                 <span class="text-[10px] font-bold uppercase tracking-wider bg-purple-400/20 text-purple-300 border border-purple-400/30 px-2 py-0.5 rounded-md">
                     Dokter
                 </span>
-                @elseif(request()->is('pasien*'))
+                @elseif($role === 'pasien')
                 <span class="text-[10px] font-bold uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-md">
                     Pasien
                 </span>
@@ -31,15 +41,8 @@
     {{-- ================= MENU ================= --}}
     <div class="flex-1 overflow-y-auto px-3 py-4">
 
-        @php
-        $baseLink = "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200";
-        $inactive = "text-slate-300 hover:bg-white/10 hover:text-white";
-        $active = "bg-gradient-to-r from-white/20 to-white/5 text-white font-semibold border border-indigo-400 border-2";
-        @endphp
-
-
         {{-- ================= MENU ADMIN ================= --}}
-        @if(request()->is('admin*'))
+        @if($role === 'admin')
         <p class="text-xs font-bold uppercase tracking-widest text-indigo-400 px-3 mb-3">
             Menu Admin
         </p>
@@ -63,19 +66,31 @@
                 Manajemen Dokter
             </a>
 
+            <a href="{{ route('pasien.index') }}"
+                class="{{ $baseLink }} {{ request()->routeIs('pasien.*') ? $active : $inactive }}">
+                <i class="fas fa-users w-4 text-center"></i>
+                Manajemen Pasien
+            </a>
+
             {{-- MENU OBAT SESUAI TUGAS BAGIAN 1 --}}
             <a href="{{ route('obat.index') }}"
                 class="{{ $baseLink }} {{ request()->routeIs('obat.*') ? $active : $inactive }}">
                 <i class="fas fa-pills w-4 text-center"></i>
                 Manajemen Obat
             </a>
+
+            <a href="{{ route('admin.pembayaran.index') }}"
+                class="{{ $baseLink }} {{ request()->routeIs('admin.pembayaran.*') ? $active : $inactive }}">
+                <i class="fas fa-file-invoice-dollar w-4 text-center"></i>
+                Verifikasi Pembayaran
+            </a>
         </div>
         @endif
 
 
         {{-- ================= MENU DOKTER ================= --}}
-        @if(request()->is('dokter*'))
-        <p class="text-xs font-bold uppercase tracking-widest text-purple-400 px-3 mb-3 mt-6">
+        @if($role === 'dokter')
+        <p class="text-xs font-bold uppercase tracking-widest text-purple-400 px-3 mb-3">
             Menu Dokter
         </p>
 
@@ -97,6 +112,7 @@
                 <i class="fas fa-notes-medical w-4 text-center"></i>
                 Periksa Pasien
             </a>
+
             <a href="{{ route('riwayat-pasien.index') }}"
                 class="{{ $baseLink }} {{ request()->routeIs('riwayat-pasien.*') ? $active : $inactive }}">
                 <i class="fas fa-clock-rotate-left w-4 text-center"></i>
@@ -107,8 +123,8 @@
 
 
         {{-- ================= MENU PASIEN ================= --}}
-        @if(request()->is('pasien*'))
-        <p class="text-xs font-bold uppercase tracking-widest text-amber-400 px-3 mb-3 mt-6">
+        @if($role === 'pasien')
+        <p class="text-xs font-bold uppercase tracking-widest text-amber-400 px-3 mb-3">
             Menu Pasien
         </p>
 
@@ -120,12 +136,38 @@
             </a>
 
             <a href="{{ route('pasien.daftar') }}"
-                class="{{ $baseLink }} {{ request()->routeIs('pasien.daftar') ? $active : $inactive }}">
+                class="{{ $baseLink }} {{ request()->routeIs('pasien.daftar*') ? $active : $inactive }}">
                 <i class="fas fa-house-medical w-4 text-center"></i>
                 Pendaftaran Periksa
             </a>
+
+            <a href="{{ route('pasien.riwayat.index') }}"
+                class="{{ $baseLink }} {{ request()->routeIs('pasien.riwayat.*') ? $active : $inactive }}">
+                <i class="fas fa-clock-rotate-left w-4 text-center"></i>
+                Riwayat Pendaftaran
+            </a>
+
+            <a href="{{ route('pasien.pembayaran.index') }}"
+                class="{{ $baseLink }} {{ request()->routeIs('pasien.pembayaran.*') ? $active : $inactive }}">
+                <i class="fas fa-file-invoice-dollar w-4 text-center"></i>
+                Pembayaran
+            </a>
         </div>
         @endif
+
+
+        {{-- ================= AKUN (SEMUA ROLE) ================= --}}
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400 px-3 mb-3 mt-6">
+            Akun
+        </p>
+
+        <div class="space-y-1">
+            <a href="{{ route('profile.edit') }}"
+                class="{{ $baseLink }} {{ request()->routeIs('profile.*') ? $active : $inactive }}">
+                <i class="fas fa-user-gear w-4 text-center"></i>
+                Profile
+            </a>
+        </div>
 
     </div>
 

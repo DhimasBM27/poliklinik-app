@@ -53,8 +53,8 @@
                         class="select select-bordered border-2 px-4 w-full rounded-lg @error('obat') select-error @enderror">
                         <option value="">-- Pilih Obat --</option>
                         @foreach ($obats as $obat)
-                            <option value="{{ $obat->id }}">
-                                {{ $obat->nama_obat }} - {{ $obat->kemasan }} (Rp {{ number_format($obat->harga, 0, ',', '.') }})
+                            <option value="{{ $obat->id }}" {{ $obat->stok <= 0 ? 'disabled' : '' }}>
+                                {{ $obat->nama_obat }} - {{ $obat->kemasan }} (Rp {{ number_format($obat->harga, 0, ',', '.') }}) | Stok: {{ $obat->stok }}
                             </option>
                         @endforeach
                     </select>

@@ -29,4 +29,12 @@ class DaftarPoli extends Model
     {
         return $this->hasMany(Periksa::class, 'id_daftar_poli');
     }
+
+    /**
+     * Pendaftaran yang belum diperiksa dokter (antrian masih aktif).
+     */
+    public function scopeBelumDiperiksa($query)
+    {
+        return $query->whereDoesntHave('periksas');
+    }
 }

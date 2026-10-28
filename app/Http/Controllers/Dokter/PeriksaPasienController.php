@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Dokter;
 
+use App\Events\AntrianDiperbarui;
 use App\Http\Controllers\Controller;
 use App\Models\DaftarPoli;
 use App\Models\DetailPeriksa;
 use App\Models\Obat;
+use App\Models\Pembayaran;
 use App\Models\Periksa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PeriksaPasienController extends Controller
 {
@@ -83,22 +86,42 @@ class PeriksaPasienController extends Controller
         // Total dihitung di server dari harga di database, bukan dari data browser.
         $obatIds   = array_unique($request->obat);
         $totalObat = Obat::whereIn('id', $obatIds)->sum('harga');
+        $biaya     = self::BIAYA_JASA_DOKTER + $totalObat;
 
-        DB::transaction(function () use ($request, $daftarPoli, $obatIds, $totalObat) {
+        DB::transaction(function () use ($request, $daftarPoli, $obatIds, $biaya) {
             $periksa = Periksa::create([
                 'id_daftar_poli' => $daftarPoli->id,
                 'tgl_periksa'    => now(),
                 'catatan'        => $request->catatan,
-                'biaya_periksa'  => self::BIAYA_JASA_DOKTER + $totalObat,
+                'biaya_periksa'  => $biaya,
             ]);
 
             foreach ($obatIds as $idObat) {
+                // Kurangi stok hanya jika stok masih ada; jika tidak, batalkan semuanya.
+                $berkurang = Obat::where('id', $idObat)->where('stok', '>', 0)->decrement('stok');
+
+                if ($berkurang === 0) {
+                    throw ValidationException::withMessages([
+                        'obat' => 'Stok salah satu obat yang dipilih sudah habis.',
+                    ]);
+                }
+
                 DetailPeriksa::create([
                     'id_periksa' => $periksa->id,
                     'id_obat'    => $idObat,
                 ]);
             }
+
+            // Tagihan otomatis dibuat; pasien membayar lewat menu Pembayaran.
+            Pembayaran::create([
+                'id_periksa' => $periksa->id,
+                'jumlah'     => $biaya,
+                'status'     => Pembayaran::BELUM_BAYAR,
+            ]);
         });
+
+        // Setelah pasien selesai diperiksa, nomor yang sedang dilayani maju.
+        AntrianDiperbarui::kirim($daftarPoli->id_jadwal);
 
         return redirect()
             ->route('periksa-pasien.index')

@@ -23,6 +23,17 @@
                     Pendaftaran Poli
                 </h2>
 
+                @if (!empty($sudahAktif))
+                <div class="alert alert-warning mb-4 text-sm rounded-xl">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>
+                        Anda masih memiliki antrian aktif. Pendaftaran baru hanya bisa dilakukan
+                        setelah pemeriksaan selesai.
+                        <a href="{{ route('pasien.dashboard') }}" class="font-semibold underline">Lihat antrian</a>
+                    </span>
+                </div>
+                @endif
+
                 <form action="{{ route('pasien.daftar.submit') }}" method="POST">
                     @csrf
 
@@ -82,7 +93,8 @@
                     {{-- Tombol --}}
                     <div class="flex justify-end">
                         <button type="submit"
-                            class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                            class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            {{ !empty($sudahAktif) ? 'disabled' : '' }}>
                             Daftar Poli
                         </button>
                     </div>

@@ -9,7 +9,10 @@
     @if ($antrianAktif)
         @php $jadwalAktif = $antrianAktif->jadwalPeriksa; @endphp
 
-        <div class="rounded-2xl p-6 mb-8 text-white shadow-md bg-gradient-to-r from-indigo-600 to-blue-500
+        <div id="antrian-aktif"
+             data-jadwal="{{ $jadwalAktif->id }}"
+             data-nomor="{{ $antrianAktif->no_antrian }}"
+             class="rounded-2xl p-6 mb-8 text-white shadow-md bg-gradient-to-r from-indigo-600 to-blue-500
                     flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
             <div class="space-y-3">
@@ -144,6 +147,19 @@
                     el.classList.add('animate-pulse');
                     setTimeout(function () { el.classList.remove('animate-pulse'); }, 1500);
                 });
+
+                // Jika antrian pasien ini sudah selesai diperiksa (nomor yang dilayani
+                // sudah melewati nomornya, atau antrian jadwal ini sudah habis),
+                // muat ulang halaman supaya banner antrian aktif hilang.
+                var banner = document.getElementById('antrian-aktif');
+                if (banner && Number(banner.dataset.jadwal) === Number(e.id_jadwal)) {
+                    var nomorSaya = Number(banner.dataset.nomor);
+                    var dilayani  = e.sedang_dilayani;
+
+                    if (dilayani === null || dilayani === undefined || Number(dilayani) > nomorSaya) {
+                        setTimeout(function () { window.location.reload(); }, 800);
+                    }
+                }
             });
 
             // Indikator koneksi WebSocket.

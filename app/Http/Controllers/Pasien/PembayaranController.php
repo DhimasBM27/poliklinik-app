@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Pasien;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pembayaran;
+use App\Models\User;
 use App\Notifications\PembayaranDiunggah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class PembayaranController extends Controller
@@ -68,9 +70,16 @@ class PembayaranController extends Controller
             return back()->with('error', 'Tagihan ini sudah dibayar atau sedang diverifikasi.');
         }
 
-        // Satu kejadian = satu notifikasi, untuk dokter yang memeriksa pasien ini.
-        $dokter = $daftarPoli->jadwalPeriksa->dokter;
-        $dokter->notify(new PembayaranDiunggah($pembayaran, Auth::user()));
+        // Satu kejadian = satu notifikasi per penerima:
+        // - semua admin (yang bertugas memverifikasi pembayaran),
+        // - dokter yang memeriksa pasien ini.
+        $penerima = User::where('role', 'admin')->get();
+
+        if ($dokter = $daftarPoli->jadwalPeriksa->dokter) {
+            $penerima->push($dokter);
+        }
+
+        Notification::send($penerima, new PembayaranDiunggah($pembayaran, Auth::user()));
 
         return redirect()
             ->route('pasien.pembayaran.index')
